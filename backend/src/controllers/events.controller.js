@@ -1,7 +1,207 @@
+const prisma = require('../prismaClient');
+
 module.exports = {
-  listEvents: async (req, res) => res.status(501).json({ message: "Not implemented yet" }),
+  // Create a new event
+  createEvent: async (req, res) => {
+    try {
+      const {
+        title,
+        description,
+        category,
+        date,
+        durationHours,
+        locationText,
+        lat,
+        lng,
+        skillsRequired,
+        maxVolunteers,
+        posterUrl
+      } = req.body;
+
+      // Ensure user is an organiser
+      if (req.user.role !== 'ORGANISER') {
+        return res.status(403).json({ error: 'Only organisers can create events' });
+      }
+
+      // Find the organisation associated with this user
+      const organisation = await prisma.organisation.findUnique({
+        where: { organiserId: req.user.id }
+      });
+
+      if (!organisation) {
+        return res.status(400).json({ error: 'You must create an organisation profile first' });
+      }
+
+      const event = await prisma.event.create({
+        data: {
+          title,
+          description,
+          category,
+          date: new Date(date),
+          durationHours: parseFloat(durationHours),
+          locationText,
+          lat: lat ? parseFloat(lat) : null,
+          lng: lng ? parseFloat(lng) : null,
+          skillsRequired,
+          maxVolunteers: parseInt(maxVolunteers),
+          posterUrl,
+          organisationId: organisation.id,
+          postedById: req.user.id
+        }
+      });
+
+      res.status(201).json(event);
+    } catch (error) {
+      console.error('Create Event Error:', error);
+      res.status(500).json({ error: 'Failed to create event' });
+    }
+  },
+
+  // List all events with optional filters
+  listEvents: async (req, res) => {
+    try {
+      const { category, location, search } = req.query;
+      
+      const where = {};
+      
+      if (category) {
+        where.category = category;
+      }
+      
+      if (location) {
+        where.locationText = { contains: location };
+      }
+      
+      if (search) {
+        where.OR = [
+          { title: { contains: search } },
+          { description: { contains: search } }
+        ];
+      }
+
+      const events = await prisma.event.findMany({
+        where,
+        include: {
+          organisation: {
+            select: { name: true, logoUrl: true }
+          }
+        },
+        orderBy: { date: 'asc' }
+      });
+
+      res.json(events);
+    } catch (error) {
+      console.error('List Events Error:', error);
+      res.status(500).json({ error: 'Failed to fetch events' });
+    }
+  },
+
+  // Get a single event by ID
+  getEvent: async (req, res) => {
+    try {
+      const { id } = req.params;
+      const event = await prisma.event.findUnique({
+        where: { id: parseInt(id) },
+        include: {
+          organisation: true,
+          postedBy: {
+            select: { name: true, email: true }
+          }
+        }
+      });
+
+      if (!event) {
+        return res.status(404).json({ error: 'Event not found' });
+      }
+
+      res.json(event);
+    } catch (error) {
+      console.error('Get Event Error:', error);
+      res.status(500).json({ error: 'Failed to fetch event' });
+    }
+  },
+
+  // Update an event
+  updateEvent: async (req, res) => {
+    try {
+      const { id } = req.params;
+      const data = req.body;
+
+      // Check ownership
+      const existingEvent = await prisma.event.findUnique({
+        where: { id: parseInt(id) }
+      });
+
+      if (!existingEvent) {
+        return res.status(404).json({ error: 'Event not found' });
+      }
+
+      if (existingEvent.postedById !== req.user.id) {
+        return res.status(403).json({ error: 'Not authorized to update this event' });
+      }
+
+      // Handle date conversion if present
+      if (data.date) {
+        data.date = new Date(data.date);
+      }
+      if (data.durationHours) data.durationHours = parseFloat(data.durationHours);
+      if (data.maxVolunteers) data.maxVolunteers = parseInt(data.maxVolunteers);
+      if (data.lat) data.lat = parseFloat(data.lat);
+      if (data.lng) data.lng = parseFloat(data.lng);
+
+      const updatedEvent = await prisma.event.update({
+        where: { id: parseInt(id) },
+        data
+      });
+
+      res.json(updatedEvent);
+    } catch (error) {
+      console.error('Update Event Error:', error);
+      res.status(500).json({ error: 'Failed to update event' });
+    }
+  },
+
+  // Delete an event
+  deleteEvent: async (req, res) => {
+    try {
+      const { id } = req.params;
+
+      // Check ownership
+      const existingEvent = await prisma.event.findUnique({
+        where: { id: parseInt(id) }
+      });
+
+      if (!existingEvent) {
+        return res.status(404).json({ error: 'Event not found' });
+      }
+
+      if (existingEvent.postedById !== req.user.id) {
+        return res.status(403).json({ error: 'Not authorized to delete this event' });
+      }
+
+      await prisma.event.delete({
+        where: { id: parseInt(id) }
+      });
+
+      res.json({ message: 'Event deleted successfully' });
+    } catch (error) {
+      console.error('Delete Event Error:', error);
+      res.status(500).json({ error: 'Failed to delete event' });
+    }
+  },
+
+  listMyEvents: async (req, res) => {
+    try {
+      const events = await prisma.event.findMany({
+        where: { postedById: req.user.id },
+        orderBy: { date: 'desc' }
+      });
+      res.json(events);
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to fetch your events' });
+    }
+  },
+
   applyToEvent: async (req, res) => res.status(501).json({ message: "Not implemented yet" }),
-  createEvent: async (req, res) => res.status(501).json({ message: "Not implemented yet" }),
-  listMyEvents: async (req, res) => res.status(501).json({ message: "Not implemented yet" }),
   getEventSignups: async (req, res) => res.status(501).json({ message: "Not implemented yet" })
 };
