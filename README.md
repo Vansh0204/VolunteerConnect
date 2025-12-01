@@ -23,28 +23,28 @@ This project was built to simulate a real-world collaborative environment. We fo
 
 We divided the work into distinct feature sets to simulate a professional workflow.
 
-### 🔹 Member 1: The Gateway (Auth & Landing)
+### 🔹 Aditya Mishra : The Gateway (Auth & Landing)
 **Role:** Frontend & Auth Developer
 *   **First Impression**: Built the **Landing Page** with a premium, responsive design to attract users.
 *   **Security**: Implemented the entire **Authentication System** (JWT-based).
 *   **User Entry**: Created **Sign-up** and **Login** modals for both Volunteers and Organisers.
 *   **State Management**: Set up the authentication context and protected routes to secure the app.
 
-### 🔹 Member 2: The Foundation (Events System)
+### 🔹 Vansh Agarwal : The Foundation (Events System)
 **Role:** Core Feature Developer
 *   **Built the "Heart" of the App**: Implemented the entire Events CRUD (Create, Read, Update, Delete) system.
 *   **Backend**: Created `events.controller.js` and routes to handle event data.
 *   **Frontend**: Built the **Events Listing Page** (with search/filters), **Event Details Page**, and **Create/Edit Event Forms**.
 *   **Infrastructure**: Set up the SQLite database and wrote the `seed.js` script to populate the app with test data.
 
-### 🔹 Member 3: The Volunteer Experience
+### 🔹 Pranjal Tripathi : The Volunteer Experience
 **Role:** Volunteer Feature Developer
 *   **Enabled Participation**: Built the system for volunteers to **Apply** to events.
 *   **Profile System**: Created the **Volunteer Profile Page** (view/edit) and **My Events Page** to track signups.
 *   **Logic**: Implemented backend checks to prevent duplicate signups and manage event capacity.
 *   **Dashboard**: Enhanced the Volunteer Dashboard with real-time stats and navigation.
 
-### 🔹 Member 4: The Organiser Tools
+### 🔹 Priyanshu Verma : The Organiser Tools
 **Role:** Organiser Feature Developer
 *   **Empowered Organisers**: Built the tools to manage the people behind the events.
 *   **Dashboard**: Created the **Organiser Dashboard** showing real-time impact stats (Total Volunteers, Active Events).
