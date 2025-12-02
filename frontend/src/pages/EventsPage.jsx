@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { eventsService } from '../services/events.service';
+import { getUser } from '../hooks/auth';
 
 function EventsPage() {
     const [events, setEvents] = useState([]);
@@ -19,9 +20,17 @@ function EventsPage() {
         try {
             setLoading(true);
             const data = await eventsService.getEvents(filters);
-            setEvents(data);
+            if (Array.isArray(data)) {
+                setEvents(data);
+            } else if (data && Array.isArray(data.events)) {
+                setEvents(data.events);
+            } else {
+                console.error('Events data is not an array:', data);
+                setEvents([]);
+            }
         } catch (error) {
             console.error('Failed to fetch events:', error);
+            setEvents([]);
         } finally {
             setLoading(false);
         }
@@ -52,11 +61,19 @@ function EventsPage() {
                 </Link>
                 <div className="flex items-center space-x-3">
                     <Link
-                        to="/events/create"
-                        className="px-7 py-2 border-[3px] border-[#111] shadow-[6px_6px_0_#111] font-bold bg-[#2362ef] text-white transition-all hover:-translate-y-0.5 hover:-translate-x-0.5 hover:shadow-[8px_8px_0_#111]"
+                        to="/"
+                        className="px-6 py-2 border-[3px] border-[#111] shadow-[6px_6px_0_#111] font-bold bg-white text-[#111] transition-all hover:-translate-y-0.5 hover:-translate-x-0.5 hover:shadow-[8px_8px_0_#111]"
                     >
-                        Create Event
+                        ← Back
                     </Link>
+                    {getUser()?.role === 'ORGANISER' && (
+                        <Link
+                            to="/events/create"
+                            className="px-7 py-2 border-[3px] border-[#111] shadow-[6px_6px_0_#111] font-bold bg-[#2362ef] text-white transition-all hover:-translate-y-0.5 hover:-translate-x-0.5 hover:shadow-[8px_8px_0_#111]"
+                        >
+                            Create Event
+                        </Link>
+                    )}
                 </div>
             </nav>
 
